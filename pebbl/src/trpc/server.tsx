@@ -14,9 +14,3 @@ export const trpc = createTRPCOptionsProxy({
   router: appRouter,
   queryClient: getQueryClient,
 });
-createTRPCOptionsProxy<AppRouter>({
-  client: createTRPCClient<AppRouter>({
-    links: [httpLink({ url: "..." })],
-  }),
-  queryClient: getQueryClient,
-});
