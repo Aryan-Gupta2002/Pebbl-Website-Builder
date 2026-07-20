@@ -6,10 +6,7 @@ export const processTask = inngest.createFunction(
     const result = await step.run("handle-task", async () => {
       return { processed: true, id: event.data.id };
     });
-    // Intentional wait
-    await step.sleep("pause", "30s");
-    // ANother wait
-    await step.sleep("pause", "10s");
-    return { message: `Task ${event.data.id} complete`, result };
+    await step.sleep("pause", "5s");
+    return { message: `Task ${event.data.value} complete`, result };
   },
 );
