@@ -10,8 +10,8 @@ export const processTask = inngest.createFunction(
       system:
         "You are an expert next.js developer. You write readable,maintanable code. You write simple Next.js & React snippets.",
       model: openai({
-        model: "meta/llama-3.1-8b-instruct",
-        apiKey: process.env.NIM_API_KEY,
+        model: "nvidia/nemotron-nano-9b-v2:free",
+        apiKey: process.env.OPENROUTER_API_KEY,
         baseUrl: process.env.BASE_URL,
       }),
     });
