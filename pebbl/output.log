@@ -1,0 +1,17 @@
+D:\Github App\Pebbl-Website-Builder\pebbl\template.ts:6
+  .run("apt-get update && apt-get install -y curl && apt-get clean")
+   ^
+
+TypeError: (0 , import_e2b.Template)(...).fromBaseImage(...).run is not a function
+    at <anonymous> (D:\Github App\Pebbl-Website-Builder\pebbl\template.ts:6:4)
+    at Object.<anonymous> (D:\Github App\Pebbl-Website-Builder\pebbl\template.ts:13:3)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (D:\Github App\Pebbl-Website-Builder\pebbl\node_modules\tsx\dist\register-BLUABhh3.cjs:9:3252)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.require (node:internal/modules/cjs/loader:1504:12)
+    at require (node:internal/modules/helpers:152:16)
+
+Node.js v24.13.0
