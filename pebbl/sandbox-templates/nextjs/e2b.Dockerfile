@@ -15,4 +15,4 @@ RUN npx --yes create-next-app@15.3.4 . --yes
 
 # Matches "shadcn": "^4.13.0" in package.json
 RUN npx --yes shadcn@4.13.0 init --yes -b radix -p nova --force
-RUN npx --yes shadcn@4.13.0 add --all --yes
+RUN npx --yes shadcn@4.13.0 add button card input label textarea select checkbox dialog dropdown-menu badge separator tabs alert avatar --yes

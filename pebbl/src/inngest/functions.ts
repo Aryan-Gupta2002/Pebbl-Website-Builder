@@ -16,7 +16,15 @@ export const processTask = inngest.createFunction(
     const sandBoxId = await step.run("get-sandbox-id", async () => {
       const sandBox = await Sandbox.create(
         "actonides-default-team/pebbl-nextjs-test",
+        {
+          timeoutMs: 30 * 60 * 1000,
+          lifecycle: {
+            onTimeout: "pause",
+            autoResume: true,
+          },
+        },
       );
+      console.log(await sandBox.getInfo());
       return sandBox.sandboxId;
     });
     const codeAgent = createAgent({
@@ -83,8 +91,16 @@ export const processTask = inngest.createFunction(
                   const updatedFiles = network.state.data.files || {};
                   const sandBox = await getSandbox(sandBoxId);
                   for (const file of files) {
-                    await sandBox.files.write(file.path, file.content);
-                    updatedFiles[file.path] = file.content;
+                    const fullPath = file.path.startsWith(
+                      "/home/user/nextjs-app",
+                    )
+                      ? file.path
+                      : `/home/user/nextjs-app/${file.path.replace(/^\/?/, "")}`;
+                    await sandBox.files.write(
+                      fullPath,
+                      file.content.replace(/\\n/g, "\n"),
+                    );
+                    updatedFiles[file.path] = file.content; // keep original key for consistency
                   }
                   return updatedFiles;
                 } catch (e) {
@@ -109,7 +125,10 @@ export const processTask = inngest.createFunction(
                 const sandBox = await getSandbox(sandBoxId);
                 const contents = [];
                 for (const file of files) {
-                  const content = await sandBox.files.read(file);
+                  const fullPath = file.startsWith("/home/user/nextjs-app")
+                    ? file
+                    : `/home/user/nextjs-app/${file.replace(/^\/?/, "")}`;
+                  const content = await sandBox.files.read(fullPath);
                   contents.push({ path: file, content });
                 }
                 return JSON.stringify(contents);
@@ -160,16 +179,23 @@ export const processTask = inngest.createFunction(
         `verify-build-${attempt}`,
         async () => {
           const sandBox = await getSandbox(sandBoxId);
-
-          const build = await sandBox.commands.run("npm run build", {
-            timeoutMs: 120_000,
-          });
-
-          return {
-            exitCode: build.exitCode,
-            stdout: build.stdout,
-            stderr: build.stderr,
-          };
+          try {
+            await sandBox.commands.run("pkill -f 'next dev' || true");
+            const build = await sandBox.commands.run("npm run build", {
+              timeoutMs: 900_000,
+            });
+            return {
+              exitCode: build.exitCode,
+              stdout: build.stdout,
+              stderr: build.stderr,
+            };
+          } catch (e: any) {
+            return {
+              exitCode: e?.result?.exitCode ?? 1,
+              stdout: e?.result?.stdout ?? "",
+              stderr: e?.result?.stderr ?? String(e),
+            };
+          }
         },
       );
 
@@ -204,11 +230,31 @@ export const processTask = inngest.createFunction(
       Do not recreate the project from scratch.
 `);
     }
+    // NEW STEP: start the Next.js dev server in the background inside the sandbox.
+    // Without this, nothing is ever listening on port 3000 and the returned
+    // URL will always show "Connection refused".
+    await step.run("start-server", async () => {
+      const sandBox = await getSandbox(sandBoxId);
+      await sandBox.commands.run(
+        "cd /home/user/nextjs-app && npx next dev --turbopack -H 0.0.0.0 -p 3000",
+        { background: true },
+      );
+    });
 
     const sandBoxUrl = await step.run("get-sandbox-url", async () => {
       const sandBox = await getSandbox(sandBoxId);
       const host = sandBox.getHost(3000);
-      return `https://${host}`;
+      const url = `https://${host}`;
+
+      for (let i = 0; i < 30; i++) {
+        const check = await sandBox.commands.run(
+          `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000`,
+        );
+        if (check.stdout.trim() === "200") break;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+
+      return url;
     });
 
     return {
