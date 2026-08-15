@@ -1,7 +1,16 @@
+import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { z } from "zod";
 export const messageRouter = createTRPCRouter({
+  getMany: baseProcedure.query(async () => {
+    const messages = await prisma.message.findMany({
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+    return messages;
+  }),
   create: baseProcedure
     .input(
       z.object({
@@ -9,12 +18,19 @@ export const messageRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      await prisma.message.create({
+      const createdmessage = await prisma.message.create({
         data: {
           content: input.value,
           role: "USER",
           type: "RESULT",
         },
       });
+      await inngest.send({
+        name: "code-agent/run",
+        data: {
+          value: input.value,
+        },
+      });
+      return createdmessage;
     }),
 });
