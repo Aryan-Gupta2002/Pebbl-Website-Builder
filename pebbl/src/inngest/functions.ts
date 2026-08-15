@@ -11,7 +11,7 @@ import { z } from "zod";
 import { PROMPT } from "@/prompt";
 
 export const processTask = inngest.createFunction(
-  { id: "process-task2", triggers: { event: "app/task.created" } },
+  { id: "process-task2", triggers: { event: "app/task.created" }, retries: 0 },
   async ({ event, step }) => {
     const sandBoxId = await step.run("get-sandbox-id", async () => {
       const sandBox = await Sandbox.create(
@@ -31,10 +31,14 @@ export const processTask = inngest.createFunction(
       name: "Code Agent",
       system: PROMPT,
       model: openai({
-        model: "nvidia/nemotron-nano-9b-v2:free",
+        // model: "nvidia/nemotron-nano-9b-v2:free",
+        // model: "cohere/north-mini-code:free",
+        model: "[次]gemini-3-flash-preview",
         // model: "nvidia/nemotron-3.5-lightning:free",
-        apiKey: process.env.OPENROUTER_API_KEY,
-        baseUrl: process.env.BASE_URL,
+        // apiKey: process.env.OPENROUTER_API_KEY,
+        apiKey: process.env.LINKAPI_KEY,
+        // baseUrl: process.env.BASE_URL,
+        baseUrl: "https://api.linkapi.ai/v1",
       }),
       tools: [
         createTool({
@@ -156,7 +160,7 @@ export const processTask = inngest.createFunction(
     const network = createNetwork({
       name: "coding-agent-network",
       agents: [codeAgent],
-      maxIter: 15,
+      maxIter: 30,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
@@ -180,10 +184,10 @@ export const processTask = inngest.createFunction(
         async () => {
           const sandBox = await getSandbox(sandBoxId);
           try {
-            await sandBox.commands.run("pkill -f 'next dev' || true");
-            const build = await sandBox.commands.run("npm run build", {
-              timeoutMs: 900_000,
-            });
+            const build = await sandBox.commands.run(
+              "cd /home/user/nextjs-app && npm run build",
+              { timeoutMs: 900_000 },
+            );
             return {
               exitCode: build.exitCode,
               stdout: build.stdout,
@@ -228,15 +232,23 @@ export const processTask = inngest.createFunction(
       Use readFiles to inspect the existing files when necessary.
       Use createOrUpdateFiles to make the fixes.
       Do not recreate the project from scratch.
+      After each fix, run \`npm run build\` yourself via the terminal to verify.
+      Repeat fixing and building until \`npm run build\` exits with code 0.
+      Only output <task_summary> once the build succeeds.
 `);
     }
-    // NEW STEP: start the Next.js dev server in the background inside the sandbox.
-    // Without this, nothing is ever listening on port 3000 and the returned
-    // URL will always show "Connection refused".
+    // Start the verified production build with `next start` instead of dev mode.
+    // The template's compile_page.sh already starts `next dev` on boot, so a
+    // second dev server would fail to bind port 3000, and running `next build`
+    // under a live dev server corrupts the shared `.next` folder (causing
+    // "Internal Server Error"). Serve the production build instead.
     await step.run("start-server", async () => {
       const sandBox = await getSandbox(sandBoxId);
+      // Stop the template's dev server. Use "[n]ext dev" so pkill's pattern
+      // does not match this shell's own command line.
+      await sandBox.commands.run("pkill -f '[n]ext dev' || true");
       await sandBox.commands.run(
-        "cd /home/user/nextjs-app && npx next dev --turbopack -H 0.0.0.0 -p 3000",
+        "cd /home/user/nextjs-app && npx next start -H 0.0.0.0 -p 3000",
         { background: true },
       );
     });
@@ -246,12 +258,19 @@ export const processTask = inngest.createFunction(
       const host = sandBox.getHost(3000);
       const url = `https://${host}`;
 
+      let ready = false;
       for (let i = 0; i < 30; i++) {
         const check = await sandBox.commands.run(
           `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000`,
         );
-        if (check.stdout.trim() === "200") break;
+        if (check.stdout.trim() === "200") {
+          ready = true;
+          break;
+        }
         await new Promise((r) => setTimeout(r, 1000));
+      }
+      if (!ready) {
+        throw new Error("Server did not become ready on port 3000 within 30s");
       }
 
       return url;
