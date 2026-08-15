@@ -4,14 +4,21 @@ import {
   createNetwork,
   createTool,
   openai,
+  type Tool,
 } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
 import { PROMPT } from "@/prompt";
+import prisma from "@/lib/db";
 
-export const processTask = inngest.createFunction(
-  { id: "process-task2", triggers: { event: "app/task.created" }, retries: 0 },
+interface AgentState {
+  summary: string;
+  files: { [path: string]: string };
+}
+
+export const codeAgentFunction = inngest.createFunction(
+  { id: "code-agent", triggers: { event: "code-agent/run" }, retries: 0 },
   async ({ event, step }) => {
     const sandBoxId = await step.run("get-sandbox-id", async () => {
       const sandBox = await Sandbox.create(
@@ -27,7 +34,7 @@ export const processTask = inngest.createFunction(
       console.log(await sandBox.getInfo());
       return sandBox.sandboxId;
     });
-    const codeAgent = createAgent({
+    const codeAgent = createAgent<AgentState>({
       name: "Code Agent",
       system: PROMPT,
       model: openai({
@@ -87,7 +94,10 @@ export const processTask = inngest.createFunction(
               }),
             ),
           }),
-          handler: async ({ files }, { step, network }) => {
+          handler: async (
+            { files },
+            { step, network }: Tool.Options<AgentState>,
+          ) => {
             const newFiles = await step?.run(
               "createOrUpdateFiles",
               async () => {
@@ -157,7 +167,7 @@ export const processTask = inngest.createFunction(
       },
     });
 
-    const network = createNetwork({
+    const network = createNetwork<AgentState>({
       name: "coding-agent-network",
       agents: [codeAgent],
       maxIter: 30,
@@ -217,7 +227,7 @@ export const processTask = inngest.createFunction(
         );
       }
 
-      result.state.data.summary = undefined;
+      // result.state.data.summary = undefined
 
       // Send the actual build error back to the coding agent
       result = await network.run(`
@@ -253,6 +263,10 @@ export const processTask = inngest.createFunction(
       );
     });
 
+    const isError =
+      !result.state.data.summary ||
+      Object.keys(result.state.data.files || {}).length === 0;
+
     const sandBoxUrl = await step.run("get-sandbox-url", async () => {
       const sandBox = await getSandbox(sandBoxId);
       const host = sandBox.getHost(3000);
@@ -274,6 +288,32 @@ export const processTask = inngest.createFunction(
       }
 
       return url;
+    });
+
+    await step.run("save-result", async () => {
+      if (isError) {
+        return await prisma.message.create({
+          data: {
+            content: "Something went wrong. Please try again",
+            role: "ASSISTANT",
+            type: "ERROR",
+          },
+        });
+      }
+      return await prisma.message.create({
+        data: {
+          content: result.state.data.summary,
+          role: "ASSISTANT",
+          type: "RESULT",
+          fragment: {
+            create: {
+              sandBoxUrl: sandBoxUrl,
+              title: "Fragment",
+              files: result.state.data.files,
+            },
+          },
+        },
+      });
     });
 
     return {
