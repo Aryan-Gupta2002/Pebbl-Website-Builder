@@ -1,0 +1,50 @@
+
+> pebbl@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.3.4 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://172.30.80.1:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1715ms
+ ○ Compiling /api/inngest ...
+ ✓ Compiled /api/inngest in 2.1s
+ PUT /api/inngest 200 in 2639ms
+ PUT /api/inngest 200 in 95ms
+ PUT /api/inngest 200 in 98ms
+ PUT /api/inngest 200 in 132ms
+ PUT /api/inngest 200 in 129ms
+ PUT /api/inngest 200 in 130ms
+ PUT /api/inngest 200 in 128ms
+ PUT /api/inngest 200 in 116ms
+ PUT /api/inngest 200 in 106ms
+ PUT /api/inngest 200 in 118ms
+ PUT /api/inngest 200 in 109ms
+ PUT /api/inngest 200 in 91ms
+ PUT /api/inngest 200 in 104ms
+ PUT /api/inngest 200 in 144ms
+ PUT /api/inngest 200 in 115ms
+ PUT /api/inngest 200 in 128ms
+ PUT /api/inngest 200 in 126ms
+ PUT /api/inngest 200 in 111ms
+ PUT /api/inngest 200 in 134ms
+ PUT /api/inngest 200 in 114ms
+ PUT /api/inngest 200 in 98ms
+ PUT /api/inngest 200 in 128ms
+ PUT /api/inngest 200 in 115ms
+ PUT /api/inngest 200 in 96ms
+ PUT /api/inngest 200 in 105ms
+ PUT /api/inngest 200 in 152ms
+ PUT /api/inngest 200 in 115ms
+ PUT /api/inngest 200 in 104ms
+ PUT /api/inngest 200 in 88ms
+ PUT /api/inngest 200 in 109ms
+ PUT /api/inngest 200 in 94ms
+ PUT /api/inngest 200 in 107ms
+ PUT /api/inngest 200 in 136ms
+ PUT /api/inngest 200 in 118ms
+ PUT /api/inngest 200 in 108ms
+ PUT /api/inngest 200 in 78ms
+ PUT /api/inngest 200 in 131ms
