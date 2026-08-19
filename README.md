@@ -1,3 +1,3 @@
-# Pebble---Website-Builder
+# Pebbl---Website-Builder
 <br>
 Technologies : NextJS, PostgreSQL, ReactJS, tRPC, 
