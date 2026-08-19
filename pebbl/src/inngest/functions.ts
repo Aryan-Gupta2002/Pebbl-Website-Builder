@@ -40,12 +40,16 @@ export const codeAgentFunction = inngest.createFunction(
       model: openai({
         // model: "nvidia/nemotron-nano-9b-v2:free",
         // model: "cohere/north-mini-code:free",
-        model: "[次]gemini-3-flash-preview",
+        // model: "[次]gemini-3-flash-preview",
+        model: "deepseek-v4-flash",
         // model: "nvidia/nemotron-3.5-lightning:free",
         // apiKey: process.env.OPENROUTER_API_KEY,
-        apiKey: process.env.LINKAPI_KEY,
+        apiKey: process.env.TOKEN_MAX_API_KEY,
+        // apiKey: process.env.LINKAPI_KEY,
         // baseUrl: process.env.BASE_URL,
-        baseUrl: "https://api.linkapi.ai/v1",
+        // baseUrl: "https://aicredits.in/v1",
+        // baseUrl: "https://api.link-llm.com/api/v1",
+        baseUrl: "https://api.tokenmix.ai/v1",
       }),
       tools: [
         createTool({
@@ -185,8 +189,27 @@ export const codeAgentFunction = inngest.createFunction(
     //   `Write the following snippet: ${event.data.value}`,
     // );
 
-    // Change 2
-    let result = await network.run(event.data.value);
+    let result;
+    try {
+      result = await network.run(event.data.value);
+    } catch (e: any) {
+      const message =
+        e?.message?.includes("request_timeout") ||
+        e?.message?.includes("too long")
+          ? "The AI model took too long to respond. Please try again."
+          : "Something went wrong. Please try again.";
+      await step.run("save-timeout-error", async () => {
+        return await prisma.message.create({
+          data: {
+            projectId: event.data.projectId,
+            content: message,
+            role: "ASSISTANT",
+            type: "ERROR",
+          },
+        });
+      });
+      return { url: null, title: null, files: null, summary: null };
+    }
     // Verify generated code and give the agent up to 3 chances to fix it
     for (let attempt = 1; attempt <= 3; attempt++) {
       const buildResult = await step.run(
@@ -230,7 +253,8 @@ export const codeAgentFunction = inngest.createFunction(
       // result.state.data.summary = undefined
 
       // Send the actual build error back to the coding agent
-      result = await network.run(`
+      try {
+        result = await network.run(`
       The application you generated does not build successfully.
 
       Build error:
@@ -246,6 +270,9 @@ export const codeAgentFunction = inngest.createFunction(
       Repeat fixing and building until \`npm run build\` exits with code 0.
       Only output <task_summary> once the build succeeds.
 `);
+      } catch {
+        break;
+      }
     }
     // Start the verified production build with `next start` instead of dev mode.
     // The template's compile_page.sh already starts `next dev` on boot, so a
