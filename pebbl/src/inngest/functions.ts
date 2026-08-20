@@ -41,7 +41,7 @@ export const codeAgentFunction = inngest.createFunction(
         // model: "nvidia/nemotron-nano-9b-v2:free",
         // model: "cohere/north-mini-code:free",
         // model: "[次]gemini-3-flash-preview",
-        model: "deepseek-v4-flash",
+        model: "grok-4.1-fast-reasoning",
         // model: "nvidia/nemotron-3.5-lightning:free",
         // apiKey: process.env.OPENROUTER_API_KEY,
         apiKey: process.env.TOKEN_MAX_API_KEY,
@@ -250,11 +250,8 @@ export const codeAgentFunction = inngest.createFunction(
         );
       }
 
-      // result.state.data.summary = undefined
-
       // Send the actual build error back to the coding agent
-      try {
-        result = await network.run(`
+      result = await network.run(`
       The application you generated does not build successfully.
 
       Build error:
@@ -270,9 +267,6 @@ export const codeAgentFunction = inngest.createFunction(
       Repeat fixing and building until \`npm run build\` exits with code 0.
       Only output <task_summary> once the build succeeds.
 `);
-      } catch {
-        break;
-      }
     }
     // Start the verified production build with `next start` instead of dev mode.
     // The template's compile_page.sh already starts `next dev` on boot, so a
