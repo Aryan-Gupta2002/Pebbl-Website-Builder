@@ -24,7 +24,7 @@ export const Hint = ({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger>{children}</TooltipTrigger>
+        <TooltipTrigger render={<span />}>{children}</TooltipTrigger>
         <TooltipContent side={side} align={align}>
           <p>{text}</p>
         </TooltipContent>
