@@ -1,7 +1,9 @@
 import { ProjectForm } from "@/modules/home/ui/components/project-form";
 import { ProjectsList } from "@/modules/home/ui/components/projects-list";
+import { Show } from "@clerk/nextjs";
 import Image from "next/image";
-const Page = () => {
+
+const Page = async () => {
   return (
     <div className="flex flex-col  max-w-5px max-auto w-full">
       <section className="space-y-6 py-[16vh] 2xl:py-48">
@@ -24,7 +26,9 @@ const Page = () => {
           <ProjectForm />
         </div>
       </section>
-      <ProjectsList />
+      <Show when="signed-in">
+        <ProjectsList />
+      </Show>
     </div>
   );
 };

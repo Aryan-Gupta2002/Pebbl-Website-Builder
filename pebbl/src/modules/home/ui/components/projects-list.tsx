@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 
