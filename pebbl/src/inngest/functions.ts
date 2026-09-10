@@ -5,11 +5,13 @@ import {
   createTool,
   openai,
   type Tool,
+  type Message,
+  createState,
 } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
-import { PROMPT } from "@/prompt";
+import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import prisma from "@/lib/db";
 
 interface AgentState {
@@ -24,7 +26,7 @@ export const codeAgentFunction = inngest.createFunction(
       const sandBox = await Sandbox.create(
         "actonides-default-team/pebbl-nextjs-test",
         {
-          timeoutMs: 30 * 60 * 1000,
+          timeoutMs: 15 * 60 * 1000,
           lifecycle: {
             onTimeout: "pause",
             autoResume: true,
@@ -34,6 +36,41 @@ export const codeAgentFunction = inngest.createFunction(
       console.log(await sandBox.getInfo());
       return sandBox.sandboxId;
     });
+
+    const previousMessages = await step.run(
+      "get-previous-messages",
+      async () => {
+        const formattedMessages: Message[] = [];
+
+        const messages = await prisma.message.findMany({
+          where: {
+            projectId: event.data.projectId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+        for (const message of messages) {
+          formattedMessages.push({
+            type: "text",
+            role: message.role === "ASSISTANT" ? "assistant" : "user",
+            content: message.content,
+          });
+        }
+        return formattedMessages;
+      },
+    );
+
+    const state = createState<AgentState>(
+      {
+        summary: "",
+        files: {},
+      },
+      {
+        messages: previousMessages,
+      },
+    );
+
     const codeAgent = createAgent<AgentState>({
       name: "Code Agent",
       system: PROMPT,
@@ -176,6 +213,7 @@ export const codeAgentFunction = inngest.createFunction(
       name: "coding-agent-network",
       agents: [codeAgent],
       maxIter: 30,
+      defaultState: state,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
@@ -192,7 +230,7 @@ export const codeAgentFunction = inngest.createFunction(
 
     let result;
     try {
-      result = await network.run(event.data.value);
+      result = await network.run(event.data.value, { state });
     } catch (e: any) {
       const message =
         e?.message?.includes("request_timeout") ||
@@ -211,6 +249,7 @@ export const codeAgentFunction = inngest.createFunction(
       });
       return { url: null, title: null, files: null, summary: null };
     }
+
     // Verify generated code and give the agent up to 3 chances to fix it
     for (let attempt = 1; attempt <= 3; attempt++) {
       const buildResult = await step.run(
@@ -269,6 +308,55 @@ export const codeAgentFunction = inngest.createFunction(
       Only output <task_summary> once the build succeeds.
 `);
     }
+
+    // Generating polished project name and response
+    const fragmentTitleGenerator = createAgent({
+      name: "fragment-title-generator",
+      description: "A fragment title generator",
+      system: FRAGMENT_TITLE_PROMPT,
+      model: openai({
+        model: "qwen3.5-plus",
+        apiKey: process.env.TOKEN_MAX_API_KEY,
+        baseUrl: "https://api.tokenmix.ai/v1",
+      }),
+    });
+    const responseGenerator = createAgent({
+      name: "response-generator",
+      description: "A response generator",
+      system: RESPONSE_PROMPT,
+      model: openai({
+        model: "qwen3.5-plus",
+        apiKey: process.env.TOKEN_MAX_API_KEY,
+        baseUrl: "https://api.tokenmix.ai/v1",
+      }),
+    });
+
+    const { output: fragmentTitleOutput } = await fragmentTitleGenerator.run(
+      result.state.data.summary,
+    );
+    const { output: responseOutput } = await responseGenerator.run(
+      result.state.data.summary,
+    );
+    const generateFragmentTitle = () => {
+      if (fragmentTitleOutput[0].type !== "text") {
+        return "Fragment";
+      }
+      if (Array.isArray(fragmentTitleOutput[0].content)) {
+        return fragmentTitleOutput[0].content.map((txt) => txt).join("");
+      } else {
+        return fragmentTitleOutput[0].content;
+      }
+    };
+    const generateResponse = () => {
+      if (responseOutput[0].type !== "text") {
+        return "Here you go";
+      }
+      if (Array.isArray(responseOutput[0].content)) {
+        return responseOutput[0].content.map((txt) => txt).join("");
+      } else {
+        return responseOutput[0].content;
+      }
+    };
     // Start the verified production build with `next start` instead of dev mode.
     // The template's compile_page.sh already starts `next dev` on boot, so a
     // second dev server would fail to bind port 3000, and running `next build`
@@ -326,13 +414,13 @@ export const codeAgentFunction = inngest.createFunction(
       return await prisma.message.create({
         data: {
           projectId: event.data.projectId,
-          content: result.state.data.summary,
+          content: generateResponse(),
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
             create: {
               sandBoxUrl: sandBoxUrl,
-              title: "Fragment",
+              title: generateFragmentTitle(),
               files: result.state.data.files,
             },
           },
