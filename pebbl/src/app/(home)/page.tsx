@@ -11,8 +11,8 @@ const Page = async () => {
           <Image
             src="/logo.svg"
             alt="Pebbl"
-            width={50}
-            height={50}
+            width={90}
+            height={90}
             className="hidden md:block"
           />
         </div>

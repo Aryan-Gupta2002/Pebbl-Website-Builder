@@ -65,7 +65,17 @@ export const codeAgentFunction = inngest.createFunction(
             content: message.content,
           });
         }
-        return formattedMessages.reverse();
+        formattedMessages.reverse();
+        const lastMessage = formattedMessages[formattedMessages.length - 1];
+        if (
+          formattedMessages.length > 0 &&
+          lastMessage.role === "user" &&
+          lastMessage.type === "text" &&
+          lastMessage.content === event.data.value
+        ) {
+          formattedMessages.pop();
+        }
+        return formattedMessages;
       },
     );
 
@@ -79,15 +89,26 @@ export const codeAgentFunction = inngest.createFunction(
       },
     );
 
+    const codeAgentModel = openai({
+      // model: "deepseek-v4.1-flash",
+      model: "gpt-5.6-luna",
+      apiKey: process.env.EXPLABS_API_KEY,
+      baseUrl: "https://api.experientiallabs.ai/v1",
+    });
+    const originalOnCall = codeAgentModel.onCall;
+    codeAgentModel.onCall = (m, body) => {
+      originalOnCall?.(m, body);
+      for (const msg of body.messages ?? []) {
+        if (msg.role === "assistant") {
+          (msg as any).reasoning_content = "";
+        }
+      }
+    };
+
     const codeAgent = createAgent<AgentState>({
       name: "Code Agent",
       system: PROMPT,
-      model: openai({
-        model: "deepseek-v4.1-flash",
-        apiKey: process.env.EXPLABS_API_KEY,
-        // baseUrl: "https://api.tokenmix.ai/v1",
-        baseUrl: "https://api.experientiallabs.ai/v1",
-      }),
+      model: codeAgentModel,
       tools: [
         createTool({
           name: "terminal",
@@ -318,7 +339,7 @@ export const codeAgentFunction = inngest.createFunction(
       description: "A fragment title generator",
       system: FRAGMENT_TITLE_PROMPT,
       model: openai({
-        model: "qwen3.5-plus",
+        model: "qwen3.5-flash",
         apiKey: process.env.TOKEN_MAX_API_KEY,
         baseUrl: "https://api.tokenmix.ai/v1",
       }),
@@ -328,18 +349,28 @@ export const codeAgentFunction = inngest.createFunction(
       description: "A response generator",
       system: RESPONSE_PROMPT,
       model: openai({
-        model: "qwen3.5-plus",
+        model: "qwen3.5-flash",
         apiKey: process.env.TOKEN_MAX_API_KEY,
         baseUrl: "https://api.tokenmix.ai/v1",
       }),
     });
 
-    const { output: fragmentTitleOutput } = await fragmentTitleGenerator.run(
-      result.state.data.summary,
-    );
-    const { output: responseOutput } = await responseGenerator.run(
-      result.state.data.summary,
-    );
+    let fragmentTitleOutput;
+    let responseOutput;
+    try {
+      const t = await fragmentTitleGenerator.run(result.state.data.summary);
+      fragmentTitleOutput = t.output;
+    } catch (e) {
+      console.error("fragment-title-generator failed:", e);
+      fragmentTitleOutput = [{ type: "text", content: "" }];
+    }
+    try {
+      const r = await responseGenerator.run(result.state.data.summary);
+      responseOutput = r.output;
+    } catch (e) {
+      console.error("response-generator failed:", e);
+      responseOutput = [{ type: "text", content: "" }];
+    }
     const generateFragmentTitle = () => {
       if (fragmentTitleOutput[0].type !== "text") {
         return "Fragment";
@@ -388,7 +419,7 @@ export const codeAgentFunction = inngest.createFunction(
       let ready = false;
       for (let i = 0; i < 30; i++) {
         const check = await sandBox.commands.run(
-          `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000`,
+          `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || true`,
         );
         if (check.stdout.trim() === "200") {
           ready = true;
