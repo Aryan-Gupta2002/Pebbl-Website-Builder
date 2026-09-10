@@ -15,7 +15,6 @@ import { Form, FormField } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "../../constants";
 import { useClerk } from "@clerk/nextjs";
-import { errorBarReducer } from "recharts/types/state/errorBarSlice";
 
 const formSchema = z.object({
   value: z

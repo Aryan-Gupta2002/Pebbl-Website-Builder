@@ -19,6 +19,13 @@ interface AgentState {
   files: { [path: string]: string };
 }
 
+interface CommandResult {
+  result: { exitCode: number; stdout: string; stderr: string };
+}
+
+const hasResult = (e: unknown): e is CommandResult =>
+  typeof e === "object" && e !== null && "result" in e;
+
 export const codeAgentFunction = inngest.createFunction(
   { id: "code-agent", triggers: { event: "code-agent/run" }, retries: 0 },
   async ({ event, step }) => {
@@ -223,10 +230,11 @@ export const codeAgentFunction = inngest.createFunction(
     let result;
     try {
       result = await network.run(event.data.value, { state });
-    } catch (e: any) {
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "";
       const message =
-        e?.message?.includes("request_timeout") ||
-        e?.message?.includes("too long")
+        errorMessage.includes("request_timeout") ||
+        errorMessage.includes("too long")
           ? "The AI model took too long to respond. Please try again."
           : "Something went wrong. Please try again.";
       await step.run("save-timeout-error", async () => {
@@ -258,12 +266,15 @@ export const codeAgentFunction = inngest.createFunction(
               stdout: build.stdout,
               stderr: build.stderr,
             };
-          } catch (e: any) {
-            return {
-              exitCode: e?.result?.exitCode ?? 1,
-              stdout: e?.result?.stdout ?? "",
-              stderr: e?.result?.stderr ?? String(e),
-            };
+          } catch (e) {
+            if (hasResult(e)) {
+              return {
+                exitCode: e.result.exitCode,
+                stdout: e.result.stdout,
+                stderr: e.result.stderr,
+              };
+            }
+            return { exitCode: 1, stdout: "", stderr: String(e) };
           }
         },
       );

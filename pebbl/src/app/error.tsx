@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 interface ErrorPageProps {
@@ -86,7 +87,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             Try again
           </button>
 
-          <a
+          <Link
             href="/"
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-3 text-sm font-medium text-zinc-300 backdrop-blur-sm transition-all duration-200 hover:border-zinc-700 hover:bg-zinc-800 hover:text-white active:scale-[0.98] sm:w-auto"
           >
@@ -104,7 +105,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 d="m9 18 6-6-6-6"
               />
             </svg>
-          </a>
+          </Link>
         </div>
 
         {/* Error ID */}

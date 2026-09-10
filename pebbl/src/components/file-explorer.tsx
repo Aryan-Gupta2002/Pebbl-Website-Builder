@@ -18,9 +18,7 @@ import {
   BreadcrumbEllipsis,
 } from "@/components/ui/breadcrumb";
 import { convertFilesToTreeItems } from "@/lib/utils";
-import { file } from "zod";
 import { TreeView } from "@/modules/projects/ui/components/tree-view";
-import { fi } from "date-fns/locale";
 
 type FileCollection = {
   [path: string]: string;
@@ -61,7 +59,6 @@ const FileBreadcrumb = ({ filePath }: FileBreadcrumbProps) => {
       });
     } else {
       const firstSegment = pathSegments[0];
-      const lastSegment = pathSegments[pathSegments.length - 1];
       return (
         <>
           <BreadcrumbItem>
