@@ -49,6 +49,7 @@ export const codeAgentFunction = inngest.createFunction(
           orderBy: {
             createdAt: "desc",
           },
+          take: 5,
         });
         for (const message of messages) {
           formattedMessages.push({
@@ -57,7 +58,7 @@ export const codeAgentFunction = inngest.createFunction(
             content: message.content,
           });
         }
-        return formattedMessages;
+        return formattedMessages.reverse();
       },
     );
 
@@ -75,19 +76,10 @@ export const codeAgentFunction = inngest.createFunction(
       name: "Code Agent",
       system: PROMPT,
       model: openai({
-        // model: "nvidia/nemotron-nano-9b-v2:free",
-        // model: "cohere/north-mini-code:free",
-        // model: "[次]gemini-3-flash-preview",
-        // model: "grok-4.1-fast-reasoning",
-        model: "deepseek-v4-flash",
-        // model: "nvidia/nemotron-3.5-lightning:free",
-        // apiKey: process.env.OPENROUTER_API_KEY,
-        apiKey: process.env.TOKEN_MAX_API_KEY,
-        // apiKey: process.env.LINKAPI_KEY,
-        // baseUrl: process.env.BASE_URL,
-        // baseUrl: "https://aicredits.in/v1",
-        // baseUrl: "https://api.link-llm.com/api/v1",
-        baseUrl: "https://api.tokenmix.ai/v1",
+        model: "deepseek-v4.1-flash",
+        apiKey: process.env.EXPLABS_API_KEY,
+        // baseUrl: "https://api.tokenmix.ai/v1",
+        baseUrl: "https://api.experientiallabs.ai/v1",
       }),
       tools: [
         createTool({
