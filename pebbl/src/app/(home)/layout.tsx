@@ -1,4 +1,5 @@
 import { Navbar } from "@/modules/home/ui/components/navbar";
+import { BackgroundImage } from "@/modules/home/ui/components/background-image";
 
 interface Props {
   children: React.ReactNode;
@@ -6,13 +7,18 @@ interface Props {
 
 const Layout = ({ children }: Props) => {
   return (
-    <main className="relative flex flex-col min-h-screen">
+    <main className="dark relative flex flex-col min-h-screen bg-[#08091a]">
       <Navbar />
+      {/* Background layer: BG-cloud.png + bottom fade, pinned behind content */}
       <div
         aria-hidden
-        className="absolute inset-0 h-full w-full bg-background dark:bg-[radial-gradient(#393e4a_1px,transparent_1px)] bg-[radial-gradient(#dadde2_1px,transparent_1px)] bg-size-[16px_16px]"
-      />
-      <div className="relative flex flex-1 flex-col px-4 pb-4">{children}</div>
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <BackgroundImage />
+      </div>
+      <div className="relative flex flex-1 flex-col px-4 pb-4 sm:px-6">
+        {children}
+      </div>
     </main>
   );
 };

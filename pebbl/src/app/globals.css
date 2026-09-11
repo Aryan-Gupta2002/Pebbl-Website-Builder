@@ -124,6 +124,117 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 }
 
+@theme {
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-breathe: breathe 9s ease-in-out infinite;
+  --animate-drift: drift 8s ease-in-out infinite;
+  --animate-drift-slow: drift 12s ease-in-out infinite;
+  --animate-orbit: orbit 18s linear infinite;
+  --animate-orbit-reverse: orbit 24s linear infinite reverse;
+  --animate-blink: blink 3.2s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes drift {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes orbit {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.25;
+    }
+  }
+}
+
+@property --composer-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes composer-flow {
+  from {
+    --composer-angle: 0deg;
+  }
+  to {
+    --composer-angle: 360deg;
+  }
+}
+
+.composer-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--composer-angle),
+    transparent 0deg,
+    transparent 60deg,
+    rgb(196 181 253 / 0) 60deg,
+    rgb(196 181 253 / 0.5) 78deg,
+    rgb(244 114 182 / 0.35) 94deg,
+    transparent 112deg,
+    transparent 360deg
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  animation: composer-flow 10s linear infinite;
+  opacity: 0.45;
+}
+
+.composer-glow:focus-within::before {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-glow::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 @layer base {
   button:not([disabled]),
   [role="button"]:not([disabled]) {
@@ -190,5 +301,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  ::selection {
+    background-color: rgb(139 92 246 / 0.28);
   }
 }

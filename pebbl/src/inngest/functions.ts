@@ -100,7 +100,7 @@ export const codeAgentFunction = inngest.createFunction(
       originalOnCall?.(m, body);
       for (const msg of body.messages ?? []) {
         if (msg.role === "assistant") {
-          (msg as any).reasoning_content = "";
+          (msg as { reasoning_content?: string }).reasoning_content = "";
         }
       }
     };
@@ -339,7 +339,7 @@ export const codeAgentFunction = inngest.createFunction(
       description: "A fragment title generator",
       system: FRAGMENT_TITLE_PROMPT,
       model: openai({
-        model: "qwen3.5-flash",
+        model: "gpt-5-nano",
         apiKey: process.env.TOKEN_MAX_API_KEY,
         baseUrl: "https://api.tokenmix.ai/v1",
       }),
@@ -349,7 +349,7 @@ export const codeAgentFunction = inngest.createFunction(
       description: "A response generator",
       system: RESPONSE_PROMPT,
       model: openai({
-        model: "qwen3.5-flash",
+        model: "gpt-5-nano",
         apiKey: process.env.TOKEN_MAX_API_KEY,
         baseUrl: "https://api.tokenmix.ai/v1",
       }),
