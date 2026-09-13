@@ -220,3 +220,14 @@ AI-generated projects run inside an E2B sandbox built from the template in `sand
 - Build verification is a hard gate: if the sandboxed app fails to build after 3 attempts, the job throws and no fragment is saved, instead of silently returning broken output.
 - After a successful build, the sandbox's dev server is stopped and the app is restarted with `next start` (a production server) before the preview URL is handed to the user.
 - Usage limits are enforced server-side in the tRPC `create` mutations (both for new projects and new messages) before any Inngest job is triggered, so credits are only consumed for requests that are actually queued for generation.
+
+## 📄 License
+
+This project is for educational/portfolio purposes.
+
+---
+
+## 👤 Author
+
+**Aryan Gupta**
+GitHub: [@Aryan-Gupta2002](https://github.com/Aryan-Gupta2002)
