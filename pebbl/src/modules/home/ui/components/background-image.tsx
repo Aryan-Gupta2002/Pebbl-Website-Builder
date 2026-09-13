@@ -15,7 +15,7 @@ export const BackgroundImage = () => {
       {/* Fade the cloud atmosphere into the projects background */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-[#08091a] to-transparent"
+        className="absolute inset-x-0 bottom-0 h-[45%] bg-linear-to-t from-[#08091a] to-transparent"
       />
     </>
   );

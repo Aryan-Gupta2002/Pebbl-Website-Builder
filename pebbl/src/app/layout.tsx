@@ -32,6 +32,7 @@ export default function RootLayout({
         variables: {
           colorPrimary: "#884DEF",
         },
+        options: { unsafe_disableDevelopmentModeWarnings: true },
       }}
     >
       <TRPCReactProvider>

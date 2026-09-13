@@ -92,7 +92,7 @@ export const MessageForm = ({ projectId }: Props) => {
               disabled={isPending}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              minRows={4}
+              minRows={8}
               maxRows={8}
               className="pt-4 resize-none border-none w-full outline-none bg-transparent"
               placeholder="What would you like to build ?"

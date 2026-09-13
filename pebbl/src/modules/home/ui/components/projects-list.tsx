@@ -16,7 +16,7 @@ export const ProjectsList = () => {
       {/* Section heading */}
       <div className="flex flex-col gap-1 mb-6">
         <p className="text-[11px] font-medium tracking-widest text-violet-400/70 uppercase">
-          {user.firstName}&apos;s workspace
+          {user?.firstName}&apos;s workspace
         </p>
         <h2 className="text-lg font-semibold text-white/90 tracking-tight sm:text-xl">
           Your recent creations
@@ -39,9 +39,9 @@ export const ProjectsList = () => {
             >
               {/* Luminous border layer */}
               <div className="pointer-events-none absolute inset-0 rounded-2xl border border-transparent [background:linear-gradient(to_bottom,rgba(255,255,255,0.1),rgba(255,255,255,0.02))_border-box] [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)] [-webkit-mask-composite:xor] [mask-composite:exclude] transition-all duration-300 group-hover:opacity-100 opacity-60"></div>
-              
+
               {/* Sub-border color illumination on hover */}
-              <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 bg-gradient-to-br from-lavender-400/10 via-violet-500/5 to-cyan-400/10 mix-blend-overlay"></div>
+              <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 bg-gradient-to-br from-violet-400/10 via-violet-500/5 to-cyan-400/10 mix-blend-overlay"></div>
 
               {/* Brighter upper edge highlight */}
               <div className="pointer-events-none absolute top-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

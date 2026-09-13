@@ -1,5 +1,6 @@
 import { ProjectForm } from "@/modules/home/ui/components/project-form";
 import { ProjectsList } from "@/modules/home/ui/components/projects-list";
+import { BackgroundImage } from "@/modules/home/ui/components/background-image";
 import { Show } from "@clerk/nextjs";
 import { Outfit, Noto_Serif_Display } from "next/font/google";
 
@@ -11,7 +12,15 @@ const notoSerifDisplay = Noto_Serif_Display({
 
 const Page = async () => {
   return (
-    <div className="flex w-full flex-col relative overflow-hidden">
+    <div className="dark -mx-4 -mb-4 relative flex w-[calc(100%+2rem)] flex-col overflow-hidden bg-[#08091a] min-h-screen">
+      {/* Background atmosphere */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <BackgroundImage />
+      </div>
+
       {/* Subtle Structural Detailing (Tracing lines & accents) */}
       <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden z-0">
         <div className="absolute top-0 w-full max-w-5xl h-full border-x border-white/[0.02] mix-blend-overlay"></div>
