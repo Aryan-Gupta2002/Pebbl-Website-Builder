@@ -231,3 +231,5 @@ This project is for educational/portfolio purposes.
 
 **Aryan Gupta**
 GitHub: [@Aryan-Gupta2002](https://github.com/Aryan-Gupta2002)
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Aryan-Gupta2002/Pebbl)
